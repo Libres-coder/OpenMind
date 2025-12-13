@@ -1,0 +1,23 @@
+# OpenMind 多模态模型依赖
+
+# 核心框架
+torch>=2.0.0
+transformers>=4.35.0
+accelerate>=0.24.0
+
+# 数据处理
+datasets>=2.14.0
+pillow>=10.0.0
+numpy>=1.24.0
+
+# 训练工具
+tqdm>=4.65.0
+pyyaml>=6.0
+tensorboard>=2.14.0
+
+# 可选：性能优化（GPU环境）
+# flash-attn>=2.3.0  # 需要CUDA，安装较慢
+# bitsandbytes>=0.41.0  # 量化训练
+
+# 工具
+jupyter>=1.0.0

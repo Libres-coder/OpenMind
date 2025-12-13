@@ -1,0 +1,156 @@
+# 多模态模型训练配置文件
+
+# 模型配置
+model:
+  base_model: "Qwen/Qwen2-7B"              # 基础语言模型
+  vision_model: "openai/clip-vit-large-patch14"  # 视觉编码器
+  freeze_vision: true                      # 是否冻结视觉编码器
+  perceiver_depth: 6                       # Perceiver Resampler深度
+  num_latents: 64                          # 潜在向量数量
+  enable_audio: false                      # 是否启用音频模态
+  enable_cot: true                         # 是否启用思维链推理
+  enable_verification: true                # 是否启用自我验证
+
+# 训练配置
+training:
+  # 数据路径
+  pretrain_data_path: "data/pretrain.jsonl"
+  sft_data_path: "data/sft.jsonl"
+  eval_data_path: "data/eval.jsonl"
+  
+  # 批处理配置
+  batch_size: 4
+  gradient_accumulation_steps: 4
+  effective_batch_size: 16  # batch_size * gradient_accumulation_steps
+  
+  # 优化器配置
+  learning_rate: 1.0e-5
+  weight_decay: 0.01
+  adam_beta1: 0.9
+  adam_beta2: 0.95
+  adam_epsilon: 1.0e-8
+  max_grad_norm: 1.0
+  
+  # 学习率调度
+  warmup_ratio: 0.1
+  lr_scheduler_type: "cosine"  # linear, cosine, polynomial
+  
+  # 混合精度训练
+  mixed_precision: "bf16"  # fp16, bf16, fp32
+  use_amp: false
+  
+  # 训练轮数
+  num_epochs:
+    pretrain: 10
+    sft: 5
+    rl: 3
+  
+  # 保存和日志
+  output_dir: "./checkpoints"
+  logging_steps: 10
+  save_steps: 1000
+  save_every: 5
+  eval_steps: 500
+  
+  # 分布式训练
+  num_workers: 4
+  dataloader_pin_memory: true
+  dataloader_prefetch_factor: 2
+  
+  # Wandb配置
+  use_wandb: false
+  project_name: "multimodal-reasoning-model"
+  run_name: null  # 自动生成
+  
+  # 检查点
+  resume_from_checkpoint: null
+  save_total_limit: 5
+
+# 数据处理配置
+data:
+  max_length: 2048
+  image_size: 224
+  audio_sample_rate: 16000
+  audio_max_length: 30  # 秒
+  
+  # 数据增强
+  image_augmentation:
+    random_flip: true
+    random_crop: false
+    color_jitter: false
+  
+  # 数据混合比例（预训练）
+  pretrain_data_mix:
+    image_caption: 0.40
+    ocr_data: 0.20
+    document_data: 0.15
+    video_data: 0.15
+    audio_data: 0.10
+  
+  # 数据混合比例（指令微调）
+  sft_data_mix:
+    conversation: 0.25
+    visual_qa: 0.20
+    reasoning: 0.20
+    tool_use: 0.15
+    code_generation: 0.10
+    multimodal_reasoning: 0.10
+
+# 推理配置
+inference:
+  max_length: 512
+  temperature: 0.7
+  top_p: 0.9
+  top_k: 50
+  num_beams: 1
+  repetition_penalty: 1.0
+  use_reasoning: false
+
+# 评估配置
+evaluation:
+  benchmarks:
+    - "COCO"
+    - "VQAv2"
+    - "TextVQA"
+    - "DocVQA"
+    - "GSM8K"
+    - "MATH"
+    - "HumanEval"
+  
+  metrics:
+    - "accuracy"
+    - "bleu"
+    - "rouge"
+    - "cider"
+
+# 硬件配置
+hardware:
+  num_gpus: 4
+  gpu_memory_gb: 80
+  cpu_workers: 16
+  use_gradient_checkpointing: true
+  use_flash_attention: true
+
+# 高级配置
+advanced:
+  # DeepSpeed配置
+  use_deepspeed: false
+  deepspeed_config: "configs/deepspeed_config.json"
+  
+  # FSDP配置
+  use_fsdp: false
+  fsdp_config:
+    sharding_strategy: "FULL_SHARD"
+    cpu_offload: false
+  
+  # 量化配置
+  use_quantization: false
+  quantization_bits: 8
+  
+  # LoRA微调
+  use_lora: false
+  lora_config:
+    r: 8
+    lora_alpha: 16
+    lora_dropout: 0.05
+    target_modules: ["q_proj", "v_proj"]

@@ -1,0 +1,43 @@
+# Week 1 训练配置 - 稳定性验证
+
+# 模型配置
+model:
+  base_model: 'Qwen/Qwen2-0.5B'  # 使用小模型快速测试
+  img_size: 384
+  patch_size: 14
+  vision_embed_dim: 1152
+  vision_depth: 27
+  vision_heads: 16
+  use_flash_attn: true
+  projector_type: 'token_pooling'
+  downsample_ratio: 2
+  enable_audio: false
+  enable_cot: true
+  enable_verification: true
+
+# 训练参数
+training:
+  num_epochs: 3
+  batch_size: 2
+  gradient_accumulation: 8
+  learning_rate: 2.0e-5
+  weight_decay: 0.01
+  warmup_steps: 100
+  max_steps: 3000
+  use_amp: true
+  
+  # 保存和日志
+  output_dir: 'outputs/week1'
+  save_steps: 500
+  logging_steps: 50
+  eval_steps: 500
+  
+  # 数据配置
+  max_length: 512
+  num_workers: 2
+
+# 数据集配置
+data:
+  train_data: 'data/train_small.jsonl'
+  eval_data: 'data/eval_small.jsonl'
+  image_dir: 'data/images'
