@@ -43,3 +43,4 @@ Thumbs.db
 *.tmp
 *.bak
 *.cache
+memory_store/
