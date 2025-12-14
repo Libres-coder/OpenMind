@@ -5,7 +5,7 @@ from typing import Optional, Dict, List, Tuple
 import math
 
 # 导入改进的视觉组件
-from improved_vision_encoder import ImprovedVisionEncoder, ImprovedProjector
+from src.improved_vision_encoder import ImprovedVisionEncoder, ImprovedProjector
 
 
 class PerceiverResampler(nn.Module):
@@ -131,7 +131,11 @@ class MultimodalReasoningModel(nn.Module):
             low_cpu_mem_usage=True,
             trust_remote_code=True
         )
-        self.tokenizer = AutoTokenizer.from_pretrained(config['base_model'])
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            config.get('llm_model', config['base_model'])
+        )
+        if self.tokenizer.pad_token is None:
+            self.tokenizer.pad_token = self.tokenizer.eos_token
         
         # 使用改进的视觉编码器（SigLIP + Flash Attention）
         self.vision_encoder = ImprovedVisionEncoder(

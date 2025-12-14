@@ -132,6 +132,7 @@ def main():
     # 创建轻量级模型
     logger.info("\n[1/4] 创建轻量级模型...")
     model = LightweightMultimodalModel({})
+    model = model.to("cuda")
     
     # 创建数据集
     logger.info("\n[2/4] 创建数据集...")
