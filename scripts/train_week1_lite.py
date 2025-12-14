@@ -134,6 +134,10 @@ def main():
     model = LightweightMultimodalModel({})
     model = model.to("cuda")
     
+    # 将模型移到GPU
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model = model.to(device)
+    
     # 创建数据集
     logger.info("\n[2/4] 创建数据集...")
     dataset = SimpleDataset(num_samples=50)

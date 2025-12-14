@@ -124,9 +124,18 @@ class MultimodalReasoningModel(nn.Module):
         super().__init__()
         self.config = config
         
-        # CPU环境：使用float32并启用低内存模式
+        # 加载预训练的LLM（支持本地路径）
+        llm_model = config.get('llm_model', 'Qwen/Qwen2-0.5B')
+        
+        # 检查是否为本地路径
+        import os
+        if os.path.exists(llm_model):
+            print(f"从本地加载模型: {llm_model}")
+        else:
+            print(f"从Hugging Face加载模型: {llm_model}")
+        
         self.llm = AutoModel.from_pretrained(
-            config['base_model'],
+            llm_model,
             torch_dtype=torch.float32,
             low_cpu_mem_usage=True,
             trust_remote_code=True
