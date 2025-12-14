@@ -3,7 +3,7 @@
 ### 基础设施
 - Week 1: 轻量级模型训练 (31.6M参数)
 - Week 2-3: Flash Attention + KV Cache + 量化 + 推理服务器
-### Phase 1-6: 核心能力模块
+### Phase 1-7: 核心能力模块
 | Phase | 模块 | 参数量 | 功能 |
 |-------|------|--------|------|
 | 1 | src/memory/ | ~0M | 短期+长期记忆 |
@@ -12,21 +12,21 @@
 | 4 | src/evolution/ | 7.68M | 自评估+经验回放+自改进 |
 | 5 | src/core/ | +6.5M | 统一Agent整合 |
 | 6 | src/api/ | - | FastAPI服务 |
-### 🎯 OpenMindAgent (总计: 122.92M参数)
-统一智能体 + API服务：
+| 7 | src/tools/ | 5.17M | 工具调用能力 |
+### 🎯 OpenMindAgent (总计: ~128M参数)
+统一智能体，整合所有能力：
 - **记忆**: 对话上下文 + 长期知识存储
 - **推理**: Chain-of-Thought + 自我验证 + 问题分解
 - **视觉**: ViT编码 + 跨模态注意力 + 多模态融合
 - **进化**: 自我评估 + 经验回放 + 自我改进
 - **API**: FastAPI + CORS + 多端点
-API端点：
-- GET / - 服务信息
-- GET /health - 健康检查
-- GET /stats - Agent统计
-- POST /chat - 对话接口
-- POST /analyze - 图像分析
-启动命令: `python -m src.api.run_server`
-访问地址: http://localhost:8000/docs
+- **工具**: 计算器/代码执行/搜索/JSON/日期时间
+### 🔧 内置工具
+- calculator: 数学计算
+- code_executor: Python代码执行
+- search: 信息搜索
+- json_parser: JSON解析
+- datetime: 日期时间
 ## 🎯 下一步
-- 工具调用能力
 - 端到端训练
+- 真实数据评估
