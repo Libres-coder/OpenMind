@@ -1,0 +1,114 @@
+# OpenMind Agent 训练配置
+# 用于端到端训练OpenMindAgent
+
+# 模型配置
+model:
+  hidden_size: 768
+  max_cot_steps: 5
+  img_size: 224
+  patch_size: 16
+  vision_layers: 6
+  fusion_layers: 4
+  buffer_capacity: 10000
+
+# 训练配置
+training:
+  batch_size: 4
+  gradient_accumulation_steps: 4
+  learning_rate: 1.0e-4
+  weight_decay: 0.01
+  warmup_steps: 100
+  max_steps: 5000
+  eval_steps: 500
+  save_steps: 1000
+  logging_steps: 50
+  
+  # 优化器
+  optimizer: adamw
+  adam_beta1: 0.9
+  adam_beta2: 0.999
+  adam_epsilon: 1.0e-8
+  
+  # 学习率调度
+  lr_scheduler: cosine
+  num_cycles: 1
+  
+  # 混合精度
+  fp16: true
+  bf16: false
+
+# 数据配置
+data:
+  train_file: data/train.jsonl
+  eval_file: data/eval.jsonl
+  max_seq_length: 512
+  max_image_size: 224
+  
+  # 数据增强
+  augmentation:
+    random_crop: true
+    random_flip: true
+    color_jitter: false
+
+# 模态配置
+modality:
+  text_weight: 1.0
+  vision_weight: 1.0
+  fusion_weight: 1.0
+  
+  # 训练模式
+  modes:
+    - text
+    - image
+    - multimodal
+
+# 损失函数配置
+loss:
+  # 主任务损失
+  task_loss_weight: 1.0
+  
+  # 推理一致性损失
+  reasoning_loss_weight: 0.1
+  
+  # 进化损失
+  evolution_loss_weight: 0.05
+  
+  # 对比学习
+  contrastive_loss_weight: 0.1
+  contrastive_temperature: 0.07
+
+# 评估配置
+evaluation:
+  metrics:
+    - accuracy
+    - loss
+    - reasoning_score
+    - evolution_score
+  
+  # 评估任务
+  tasks:
+    - text_understanding
+    - image_classification
+    - multimodal_qa
+
+# 检查点配置
+checkpoint:
+  save_dir: outputs/openmind
+  save_total_limit: 3
+  resume_from: null
+
+# 日志配置
+logging:
+  log_dir: logs/openmind
+  use_wandb: false
+  wandb_project: openmind
+  wandb_run_name: null
+
+# 硬件配置
+hardware:
+  device: auto  # auto, cuda, cpu
+  num_workers: 4
+  pin_memory: true
+
+# 随机种子
+seed: 42
