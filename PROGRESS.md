@@ -1,13 +1,20 @@
-# 项目进度 - 2024.12.13
+# 项目进度 - 2024.12.15
 ## ✅ 已完成
-- Week 1: 轻量级模型训练完成 (31.6M参数, Loss: 7.0239)
-- Week 2: Flash Attention + KV Cache实现并测试通过
-- 训练模型: outputs/week1/best_model.pt
-## 📁 新增文件
-- src/flash_attention.py
-- src/kv_cache.py  
-- src/optimized_model.py
-- scripts/train_week2_optimized.py
+### 基础设施
+- Week 1: 轻量级模型训练 (31.6M参数, Loss: 7.0239)
+- Week 2-3: Flash Attention + KV Cache + 量化 + 推理服务器
+### Phase 1: 记忆系统 ✅
+- 短期记忆: 对话上下文管理
+- 长期记忆: 持久化存储
+- 记忆管理器: 统一接口
+### Phase 2: 推理系统 ✅ (15.08M参数)
+- Chain-of-Thought: 多步推理
+- 自我验证: 结果检验
+- 问题分解: 复杂问题拆解
+- 推理引擎: 整合所有能力
+## 📁 新增模块
+- src/memory/ (记忆系统)
+- src/reasoning/ (推理系统)
 ## ⏭️ 下次继续
-- Week 2量化优化
-- Week 3推理服务器
+- Phase 3: 视觉理解 + 多模态融合
+- Phase 4: 自迭代/自我进化
