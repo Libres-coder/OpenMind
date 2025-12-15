@@ -222,6 +222,9 @@ class OpenMindTrainer:
         # 损失函数
         self.task_criterion = nn.CrossEntropyLoss()
         
+        # 输出投影层（用于分类任务）
+        self.output_proj = nn.Linear(config.hidden_size, 10).to(self.device)
+        
     def _setup_device(self) -> torch.device:
         """设置设备"""
         if self.config.device == "auto":
@@ -254,8 +257,7 @@ class OpenMindTrainer:
         )
         
         # 任务损失（使用输出的投影）
-        output_proj = nn.Linear(self.config.hidden_size, 10).to(self.device)
-        logits = output_proj(outputs["output"])
+        logits = self.output_proj(outputs["output"])
         task_loss = self.task_criterion(logits, labels)
         
         # 推理一致性损失
