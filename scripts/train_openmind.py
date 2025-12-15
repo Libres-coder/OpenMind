@@ -368,11 +368,25 @@ class OpenMindTrainer:
         logger.info(f"  学习率: {self.config.learning_rate}")
         
         accumulation_loss = {}
+        batch_count = 0
+        
+        logger.info("=" * 50)
+        logger.info("开始第一个batch...")
         
         while self.global_step < self.config.max_steps:
             for batch in train_dataloader:
+                batch_count += 1
+                
+                # 实时反馈：每个batch开始
+                if batch_count <= 5 or batch_count % 10 == 0:
+                    logger.info(f"[Batch {batch_count}] 处理中...")
+                
                 # 训练步
                 losses = self.train_step(batch)
+                
+                # 实时反馈：每个batch完成
+                if batch_count <= 5:
+                    logger.info(f"[Batch {batch_count}] 完成! loss={losses['loss']:.4f}")
                 
                 # 累积损失用于日志
                 for k, v in losses.items():
