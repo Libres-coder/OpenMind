@@ -248,12 +248,12 @@ class OpenMindTrainer:
         labels = batch["label"].to(self.device)
         image = batch["image"].to(self.device) if batch["image"] is not None else None
         
-        # 前向传播（简化模式，禁用耗时的推理和进化模块）
+        # 前向传播（完整模式，启用所有模块）
         outputs = self.model(
             text_embedding=text_embedding,
             image=image,
-            use_reasoning=False,
-            use_evolution=False
+            use_reasoning=True,
+            use_evolution=True
         )
         
         # 任务损失（使用输出的投影）
