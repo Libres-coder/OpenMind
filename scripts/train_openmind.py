@@ -373,61 +373,64 @@ class OpenMindTrainer:
         logger.info("=" * 50)
         logger.info("开始第一个batch...")
         
-        while self.global_step < self.config.max_steps:
-            for batch in train_dataloader:
-                batch_count += 1
+        # 创建无限循环的数据加载器
+        from itertools import cycle
+        infinite_dataloader = cycle(train_dataloader)
+        
+        for batch in infinite_dataloader:
+            if self.global_step >= self.config.max_steps:
+                break
                 
-                # 实时反馈：每个batch开始
-                if batch_count <= 5 or batch_count % 10 == 0:
-                    logger.info(f"[Batch {batch_count}] 处理中...")
+            batch_count += 1
+            
+            # 实时反馈：每个batch开始
+            if batch_count <= 5 or batch_count % 10 == 0:
+                logger.info(f"[Batch {batch_count}] 处理中...")
+            
+            # 训练步
+            losses = self.train_step(batch)
+            
+            # 实时反馈：每个batch完成
+            if batch_count <= 5:
+                logger.info(f"[Batch {batch_count}] 完成! loss={losses['loss']:.4f}")
+            
+            # 累积损失用于日志
+            for k, v in losses.items():
+                accumulation_loss[k] = accumulation_loss.get(k, 0) + v
+            
+            # 梯度累积
+            if (self.global_step + 1) % self.config.gradient_accumulation_steps == 0:
+                self.optimizer_step()
                 
-                # 训练步
-                losses = self.train_step(batch)
+                # 日志
+                if self.global_step % self.config.logging_steps == 0:
+                    avg_losses = {k: v / self.config.gradient_accumulation_steps 
+                                 for k, v in accumulation_loss.items()}
+                    lr = self.scheduler.get_last_lr()[0]
+                    logger.info(
+                        f"Step {self.global_step}: "
+                        f"loss={avg_losses['loss']:.4f}, "
+                        f"task={avg_losses['task_loss']:.4f}, "
+                        f"lr={lr:.2e}"
+                    )
+                    accumulation_loss = {}
                 
-                # 实时反馈：每个batch完成
-                if batch_count <= 5:
-                    logger.info(f"[Batch {batch_count}] 完成! loss={losses['loss']:.4f}")
-                
-                # 累积损失用于日志
-                for k, v in losses.items():
-                    accumulation_loss[k] = accumulation_loss.get(k, 0) + v
-                
-                # 梯度累积
-                if (self.global_step + 1) % self.config.gradient_accumulation_steps == 0:
-                    self.optimizer_step()
+                # 评估
+                if eval_dataloader and self.global_step % self.config.eval_steps == 0:
+                    eval_metrics = self.evaluate(eval_dataloader)
+                    logger.info(f"Eval Step {self.global_step}: {eval_metrics}")
                     
-                    # 日志
-                    if self.global_step % self.config.logging_steps == 0:
-                        avg_losses = {k: v / self.config.gradient_accumulation_steps 
-                                     for k, v in accumulation_loss.items()}
-                        lr = self.scheduler.get_last_lr()[0]
-                        logger.info(
-                            f"Step {self.global_step}: "
-                            f"loss={avg_losses['loss']:.4f}, "
-                            f"task={avg_losses['task_loss']:.4f}, "
-                            f"lr={lr:.2e}"
-                        )
-                        accumulation_loss = {}
-                    
-                    # 评估
-                    if eval_dataloader and self.global_step % self.config.eval_steps == 0:
-                        eval_metrics = self.evaluate(eval_dataloader)
-                        logger.info(f"Eval Step {self.global_step}: {eval_metrics}")
-                        
-                        if eval_metrics["eval_loss"] < self.best_eval_loss:
-                            self.best_eval_loss = eval_metrics["eval_loss"]
-                            self.save_checkpoint(
-                                os.path.join(self.config.save_dir, "best_model.pt")
-                            )
-                    
-                    # 保存
-                    if self.global_step % self.config.save_steps == 0:
+                    if eval_metrics["eval_loss"] < self.best_eval_loss:
+                        self.best_eval_loss = eval_metrics["eval_loss"]
                         self.save_checkpoint(
-                            os.path.join(self.config.save_dir, f"checkpoint_{self.global_step}.pt")
+                            os.path.join(self.config.save_dir, "best_model.pt")
                         )
-                    
-                    if self.global_step >= self.config.max_steps:
-                        break
+                
+                # 保存
+                if self.global_step % self.config.save_steps == 0:
+                    self.save_checkpoint(
+                        os.path.join(self.config.save_dir, f"checkpoint_{self.global_step}.pt")
+                    )
         
         # 保存最终模型
         self.save_checkpoint(os.path.join(self.config.save_dir, "final_model.pt"))
