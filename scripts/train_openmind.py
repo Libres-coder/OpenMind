@@ -398,8 +398,8 @@ class OpenMindTrainer:
             for k, v in losses.items():
                 accumulation_loss[k] = accumulation_loss.get(k, 0) + v
             
-            # 梯度累积
-            if (self.global_step + 1) % self.config.gradient_accumulation_steps == 0:
+            # 梯度累积（基于batch_count而不是global_step）
+            if batch_count % self.config.gradient_accumulation_steps == 0:
                 self.optimizer_step()
                 
                 # 日志
