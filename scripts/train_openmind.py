@@ -408,7 +408,9 @@ class OpenMindTrainer:
                         f"task={avg_losses['task_loss']:.4f}, "
                         f"lr={lr:.2e}"
                     )
-                    accumulation_loss = {}
+                
+                # 每个step后都清空accumulation_loss
+                accumulation_loss = {}
                 
                 # 评估
                 if eval_dataloader and self.global_step > 0 and self.global_step % self.config.eval_steps == 0:
