@@ -41,7 +41,7 @@ training:
 data:
   train_file: data/coco_val/train.jsonl
   eval_file: data/coco_val/eval.jsonl
-  image_dir: data/coco_val/images
+  image_dir: data/coco_val
   max_seq_length: 512
   max_image_size: 224
   
