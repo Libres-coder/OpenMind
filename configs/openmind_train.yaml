@@ -39,9 +39,9 @@ training:
 
 # 数据配置
 data:
-  train_file: data/sample/train.jsonl
-  eval_file: data/sample/eval.jsonl
-  image_dir: data/sample
+  train_file: data/coco_val/train.jsonl
+  eval_file: data/coco_val/eval.jsonl
+  image_dir: data/coco_val/images
   max_seq_length: 512
   max_image_size: 224
   
