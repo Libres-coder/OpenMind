@@ -503,6 +503,15 @@ def load_config(config_path: str) -> TrainingConfig:
         if "log_dir" in yaml_config["logging"]:
             config.log_dir = yaml_config["logging"]["log_dir"]
     
+    # 数据配置
+    if "data" in yaml_config:
+        if "train_file" in yaml_config["data"]:
+            config.train_file = yaml_config["data"]["train_file"]
+        if "eval_file" in yaml_config["data"]:
+            config.eval_file = yaml_config["data"]["eval_file"]
+        if "image_dir" in yaml_config["data"]:
+            config.image_dir = yaml_config["data"]["image_dir"]
+    
     # 硬件配置
     if "hardware" in yaml_config:
         if "device" in yaml_config["hardware"]:
@@ -533,8 +542,12 @@ def main():
         logger.info("使用默认配置")
     
     # 创建数据集
-    train_dataset = MultimodalDataset("data/train.jsonl", config, mode="train")
-    eval_dataset = MultimodalDataset("data/eval.jsonl", config, mode="eval")
+    train_file = getattr(config, 'train_file', 'data/train.jsonl')
+    eval_file = getattr(config, 'eval_file', 'data/eval.jsonl')
+    image_dir = getattr(config, 'image_dir', None)
+    
+    train_dataset = MultimodalDataset(train_file, config, mode="train", image_dir=image_dir)
+    eval_dataset = MultimodalDataset(eval_file, config, mode="eval", image_dir=image_dir)
     
     train_dataloader = DataLoader(
         train_dataset,
