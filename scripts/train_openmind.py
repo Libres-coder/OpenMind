@@ -189,9 +189,16 @@ class OpenMindTrainer:
         trainable_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
         logger.info(f"模型参数: {total_params/1e6:.2f}M (可训练: {trainable_params/1e6:.2f}M)")
         
-        # 创建优化器
+        # 损失函数
+        self.task_criterion = nn.CrossEntropyLoss()
+        
+        # 输出投影层（用于分类任务）
+        self.output_proj = nn.Linear(config.hidden_size, 10).to(self.device)
+        
+        # 创建优化器（包含model和output_proj的参数）
+        all_params = list(self.model.parameters()) + list(self.output_proj.parameters())
         self.optimizer = AdamW(
-            self.model.parameters(),
+            all_params,
             lr=config.learning_rate,
             weight_decay=config.weight_decay
         )
@@ -218,12 +225,6 @@ class OpenMindTrainer:
         # 创建输出目录
         os.makedirs(config.save_dir, exist_ok=True)
         os.makedirs(config.log_dir, exist_ok=True)
-        
-        # 损失函数
-        self.task_criterion = nn.CrossEntropyLoss()
-        
-        # 输出投影层（用于分类任务）
-        self.output_proj = nn.Linear(config.hidden_size, 10).to(self.device)
         
     def _setup_device(self) -> torch.device:
         """设置设备"""
@@ -289,6 +290,7 @@ class OpenMindTrainer:
     def train_step(self, batch: Dict[str, Any]) -> Dict[str, float]:
         """单步训练"""
         self.model.train()
+        self.output_proj.train()
         
         # 混合精度训练
         if self.scaler is not None:
@@ -306,13 +308,16 @@ class OpenMindTrainer:
     
     def optimizer_step(self):
         """优化器更新"""
+        # 收集所有参数用于梯度裁剪
+        all_params = list(self.model.parameters()) + list(self.output_proj.parameters())
+        
         if self.scaler is not None:
             self.scaler.unscale_(self.optimizer)
-            torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1.0)
+            torch.nn.utils.clip_grad_norm_(all_params, 1.0)
             self.scaler.step(self.optimizer)
             self.scaler.update()
         else:
-            torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1.0)
+            torch.nn.utils.clip_grad_norm_(all_params, 1.0)
             self.optimizer.step()
         
         self.scheduler.step()
@@ -323,6 +328,7 @@ class OpenMindTrainer:
     def evaluate(self, eval_dataloader: DataLoader) -> Dict[str, float]:
         """评估"""
         self.model.eval()
+        self.output_proj.eval()
         total_loss = 0
         total_task_loss = 0
         num_batches = 0
@@ -342,9 +348,11 @@ class OpenMindTrainer:
         """保存检查点"""
         checkpoint = {
             "model_state_dict": self.model.state_dict(),
+            "output_proj_state_dict": self.output_proj.state_dict(),
             "optimizer_state_dict": self.optimizer.state_dict(),
             "scheduler_state_dict": self.scheduler.state_dict(),
             "global_step": self.global_step,
+            "best_eval_loss": self.best_eval_loss,
             "config": self.config.__dict__
         }
         torch.save(checkpoint, path)
@@ -354,9 +362,13 @@ class OpenMindTrainer:
         """加载检查点"""
         checkpoint = torch.load(path, map_location=self.device)
         self.model.load_state_dict(checkpoint["model_state_dict"])
+        if "output_proj_state_dict" in checkpoint:
+            self.output_proj.load_state_dict(checkpoint["output_proj_state_dict"])
         self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         self.scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
         self.global_step = checkpoint["global_step"]
+        if "best_eval_loss" in checkpoint:
+            self.best_eval_loss = checkpoint["best_eval_loss"]
         logger.info(f"加载检查点: {path}, step={self.global_step}")
     
     def train(self, train_dataloader: DataLoader, eval_dataloader: DataLoader = None):
