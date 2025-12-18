@@ -20,6 +20,7 @@ from datetime import datetime
 from pathlib import Path
 import random
 import numpy as np
+from PIL import Image
 
 # 添加项目路径
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -75,10 +76,11 @@ class TrainingConfig:
 class MultimodalDataset(Dataset):
     """多模态数据集"""
     
-    def __init__(self, data_file: str, config: TrainingConfig, mode: str = "train"):
+    def __init__(self, data_file: str, config: TrainingConfig, mode: str = "train", image_dir: str = None):
         self.config = config
         self.mode = mode
         self.samples = []
+        self.image_dir = Path(image_dir) if image_dir else Path(data_file).parent
         
         # 加载数据
         if os.path.exists(data_file):
@@ -122,20 +124,35 @@ class MultimodalDataset(Dataset):
         # 生成文本嵌入（模拟，实际应使用tokenizer）
         text_embedding = torch.randn(self.config.hidden_size)
         
-        # 生成图像（模拟）
-        if sample.get("has_image"):
+        # 加载图像
+        image = None
+        image_path = sample.get("image")
+        if image_path:
+            full_path = self.image_dir / image_path
+            try:
+                img = Image.open(full_path).convert('RGB')
+                img = img.resize((self.config.img_size, self.config.img_size))
+                image = torch.from_numpy(
+                    np.array(img).transpose(2, 0, 1)
+                ).float() / 255.0
+            except Exception as e:
+                logger.warning(f"加载图像失败 {full_path}: {e}")
+                image = torch.randn(3, self.config.img_size, self.config.img_size)
+        elif sample.get("has_image"):
+            # 向后兼容：模拟数据
             image = torch.randn(3, self.config.img_size, self.config.img_size)
-        else:
-            image = None
         
         # 标签
         label = torch.tensor(sample.get("label", 0))
+        
+        # 确定modality
+        modality = "multimodal" if image is not None else "text"
         
         return {
             "text_embedding": text_embedding,
             "image": image,
             "label": label,
-            "modality": sample.get("modality", "text")
+            "modality": modality
         }
 
 
