@@ -45,11 +45,11 @@ training:
   fp16: true
   bf16: false
 
-# 数据配置
+# 数据配置 (使用已有COCO数据)
 data:
-  train_file: data/llava_instruct/train.jsonl  # 新数据集
-  eval_file: data/llava_instruct/eval.jsonl
-  image_dir: data/llava_instruct/images
+  train_file: data/coco_val/train.jsonl
+  eval_file: data/coco_val/eval.jsonl
+  image_dir: data/coco_val
   max_seq_length: 512
   max_image_size: 224
   
