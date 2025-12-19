@@ -10,14 +10,17 @@ from pathlib import Path
 from tqdm import tqdm
 import hashlib
 
-# 数据集信息
+# HuggingFace镜像站 (国内加速)
+HF_MIRROR = "https://hf-mirror.com"
+
+# 数据集信息 (使用镜像)
 DATASETS = {
     "llava_instruct_150k": {
-        "url": "https://huggingface.co/datasets/liuhaotian/LLaVA-Instruct-150K/resolve/main/llava_instruct_150k.json",
+        "url": f"{HF_MIRROR}/datasets/liuhaotian/LLaVA-Instruct-150K/resolve/main/llava_instruct_150k.json",
         "description": "LLaVA指令微调数据集 (150K条)"
     },
     "llava_instruct_80k": {
-        "url": "https://huggingface.co/datasets/liuhaotian/LLaVA-Instruct-150K/resolve/main/llava_instruct_80k.json",
+        "url": f"{HF_MIRROR}/datasets/liuhaotian/LLaVA-Instruct-150K/resolve/main/llava_instruct_80k.json",
         "description": "LLaVA指令微调数据集 (80K条，子集)"
     }
 }
