@@ -68,6 +68,9 @@ class TrainingConfig:
     fp16: bool = True
     seed: int = 42
     
+    # 冻结配置
+    freeze_vision_encoder: bool = False
+    
     # 路径
     save_dir: str = "outputs/openmind"
     log_dir: str = "logs/openmind"
@@ -201,6 +204,10 @@ class OpenMindTrainer:
         )
         self.model = OpenMindAgent(agent_config).to(self.device)
         
+        # 冻结视觉编码器（如果配置）
+        if config.freeze_vision_encoder:
+            self._freeze_vision_encoder()
+        
         # 统计参数
         total_params = sum(p.numel() for p in self.model.parameters())
         trainable_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
@@ -259,6 +266,24 @@ class OpenMindTrainer:
         torch.manual_seed(seed)
         if torch.cuda.is_available():
             torch.cuda.manual_seed_all(seed)
+    
+    def _freeze_vision_encoder(self):
+        """冻结视觉编码器参数"""
+        frozen_count = 0
+        # 冻结视觉系统中的编码器
+        if hasattr(self.model, 'vision_system'):
+            vision = self.model.vision_system
+            # 冻结视觉编码器
+            if hasattr(vision, 'encoder'):
+                for param in vision.encoder.parameters():
+                    param.requires_grad = False
+                    frozen_count += param.numel()
+            # 冻结视觉理解引擎中的编码器部分
+            if hasattr(vision, 'vision_engine') and hasattr(vision.vision_engine, 'encoder'):
+                for param in vision.vision_engine.encoder.parameters():
+                    param.requires_grad = False
+                    frozen_count += param.numel()
+        logger.info(f"已冻结视觉编码器: {frozen_count/1e6:.2f}M 参数")
     
     def compute_loss(self, batch: Dict[str, Any]) -> Dict[str, torch.Tensor]:
         """计算损失"""

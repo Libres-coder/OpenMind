@@ -1,0 +1,120 @@
+# OpenMind Agent 训练配置 v3
+# 冻结视觉编码器 - 减少可训练参数解决过拟合
+
+# 模型配置
+model:
+  hidden_size: 768
+  max_cot_steps: 5
+  img_size: 224
+  patch_size: 16
+  vision_layers: 6
+  fusion_layers: 4
+  buffer_capacity: 10000
+  dropout: 0.15  # 增加dropout
+  
+  # 冻结配置 (新增)
+  freeze_vision_encoder: true  # 冻结视觉编码器 (~93M参数)
+  freeze_evolution: false      # 保持进化模块可训练
+
+# 训练配置
+training:
+  batch_size: 4
+  gradient_accumulation_steps: 4
+  learning_rate: 1.0e-4   # 可训练参数少，可用稍高学习率
+  weight_decay: 0.05
+  warmup_steps: 100
+  max_steps: 1000         # 参数少，步数可减少
+  eval_steps: 50          # 更频繁评估
+  save_steps: 200
+  logging_steps: 25
+  
+  # 早停配置
+  early_stopping:
+    enabled: true
+    patience: 10          # 更多耐心
+    min_delta: 0.005
+  
+  # 优化器
+  optimizer: adamw
+  adam_beta1: 0.9
+  adam_beta2: 0.999
+  adam_epsilon: 1.0e-8
+  max_grad_norm: 1.0
+  
+  # 学习率调度
+  lr_scheduler: cosine
+  num_cycles: 1
+  
+  # 混合精度
+  fp16: true
+  bf16: false
+
+# 数据配置
+data:
+  train_file: data/coco_val/train.jsonl
+  eval_file: data/coco_val/eval.jsonl
+  image_dir: data/coco_val
+  max_seq_length: 512
+  max_image_size: 224
+  
+  # 数据增强
+  augmentation:
+    random_crop: true
+    random_flip: true
+    color_jitter: true
+    random_rotation: 15
+    mixup_alpha: 0.1
+
+# 模态配置
+modality:
+  text_weight: 1.0
+  vision_weight: 1.0
+  fusion_weight: 1.0
+  modes:
+    - text
+    - image
+    - multimodal
+
+# 损失函数配置
+loss:
+  task_loss_weight: 1.0
+  reasoning_loss_weight: 0.1
+  evolution_loss_weight: 0.05
+  contrastive_loss_weight: 0.1
+  contrastive_temperature: 0.07
+  label_smoothing: 0.1
+
+# 评估配置
+evaluation:
+  metrics:
+    - accuracy
+    - loss
+    - reasoning_score
+    - evolution_score
+  tasks:
+    - text_understanding
+    - image_classification
+    - multimodal_qa
+
+# 检查点配置
+checkpoint:
+  save_dir: outputs/openmind_v3
+  save_total_limit: 3
+  save_best_only: true
+  resume_from: null
+
+# 日志配置
+logging:
+  log_dir: logs/openmind_v3
+  use_wandb: false
+  wandb_project: openmind
+  wandb_run_name: null
+
+# 硬件配置
+hardware:
+  device: auto
+  num_workers: 4
+  pin_memory: true
+
+# 随机种子
+seed: 42
