@@ -1,0 +1,116 @@
+# OpenMind Agent 训练配置 v2
+# 针对过拟合问题优化
+
+# 模型配置
+model:
+  hidden_size: 768
+  max_cot_steps: 5
+  img_size: 224
+  patch_size: 16
+  vision_layers: 6
+  fusion_layers: 4
+  buffer_capacity: 10000
+  dropout: 0.1  # 新增: Dropout正则化
+
+# 训练配置 (优化版)
+training:
+  batch_size: 4
+  gradient_accumulation_steps: 4
+  learning_rate: 5.0e-5  # 降低学习率
+  weight_decay: 0.1      # 增大weight_decay (原0.01)
+  warmup_steps: 200      # 增加warmup
+  max_steps: 2000        # 减少步数，配合早停
+  eval_steps: 100        # 更频繁评估
+  save_steps: 500
+  logging_steps: 50
+  
+  # 早停配置 (新增)
+  early_stopping:
+    enabled: true
+    patience: 5          # 5次eval不改善则停止
+    min_delta: 0.01      # 最小改善阈值
+  
+  # 优化器
+  optimizer: adamw
+  adam_beta1: 0.9
+  adam_beta2: 0.999
+  adam_epsilon: 1.0e-8
+  max_grad_norm: 1.0     # 梯度裁剪
+  
+  # 学习率调度
+  lr_scheduler: cosine
+  num_cycles: 1
+  
+  # 混合精度
+  fp16: true
+  bf16: false
+
+# 数据配置
+data:
+  train_file: data/llava_instruct/train.jsonl  # 新数据集
+  eval_file: data/llava_instruct/eval.jsonl
+  image_dir: data/llava_instruct/images
+  max_seq_length: 512
+  max_image_size: 224
+  
+  # 数据增强 (增强版)
+  augmentation:
+    random_crop: true
+    random_flip: true
+    color_jitter: true   # 启用颜色抖动
+    random_rotation: 15  # 随机旋转±15度
+    mixup_alpha: 0.2     # MixUp数据增强
+
+# 模态配置
+modality:
+  text_weight: 1.0
+  vision_weight: 1.0
+  fusion_weight: 1.0
+  modes:
+    - text
+    - image
+    - multimodal
+
+# 损失函数配置
+loss:
+  task_loss_weight: 1.0
+  reasoning_loss_weight: 0.1
+  evolution_loss_weight: 0.05
+  contrastive_loss_weight: 0.1
+  contrastive_temperature: 0.07
+  label_smoothing: 0.1   # 新增: 标签平滑
+
+# 评估配置
+evaluation:
+  metrics:
+    - accuracy
+    - loss
+    - reasoning_score
+    - evolution_score
+  tasks:
+    - text_understanding
+    - image_classification
+    - multimodal_qa
+
+# 检查点配置
+checkpoint:
+  save_dir: outputs/openmind_v2
+  save_total_limit: 5
+  save_best_only: true   # 只保存最佳模型
+  resume_from: null
+
+# 日志配置
+logging:
+  log_dir: logs/openmind_v2
+  use_wandb: false
+  wandb_project: openmind
+  wandb_run_name: null
+
+# 硬件配置
+hardware:
+  device: auto
+  num_workers: 4
+  pin_memory: true
+
+# 随机种子
+seed: 42
